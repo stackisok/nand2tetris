@@ -45,6 +45,7 @@ public class Parser {
                 s = bufferedReader.readLine();
                 continue;
             }
+            s = s.replaceAll("//.*$", "").trim();
             String[] split = s.split(" +");
             String commmand = split[0];
             String address = "";

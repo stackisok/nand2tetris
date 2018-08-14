@@ -1,5 +1,6 @@
 package c07;
 
+
 import java.io.*;
 
 /**
@@ -18,6 +19,7 @@ public class Parser {
     BufferedReader bufferedReader;
     CodeWriter codeWriter;
     String currFileName ;
+    int n = 0;
     //support absolutely path
     public Parser(String filePath) throws IOException {
         if (!filePath.endsWith(".vm")){
@@ -69,12 +71,24 @@ public class Parser {
                         break;
                     }
                     case "eq": {
+                        n++;
+                        sb.append("@SP\n").append("AM=M-1\n").append("D=M\n").append("A=A-1\n").append("D=M-D\n").append("@EQ.true." + n + "\n" ).append("D;JEQ\n").
+                                append("@SP\n").append("A=M-1\n").append("M=0\n").append("@EQ.after." + n + "\n").append( "0;JMP\n").append( "(EQ.true." + n + ")\n").
+                                append("@SP\n").append("A=M-1\n").append("M=-1\n").append("(EQ.after." + n + ")\n");
                         break;
                     }
                     case "gt": {
+                        n++;
+                        sb.append("@SP\n").append("AM=M-1\n").append("D=M\n").append("A=A-1\n").append("D=M-D\n").append("@GT.true." + n + "\n" ).append("D;JGT\n").
+                                append("@SP\n").append("A=M-1\n").append("M=0\n").append("@GT.after." + n + "\n").append( "0;JMP\n").append( "(GT.true." + n + ")\n").
+                                append("@SP\n").append("A=M-1\n").append("M=-1\n").append("(GT.after." + n + ")\n");
                         break;
                     }
                     case "lt": {
+                        n++;
+                        sb.append("@SP\n").append("AM=M-1\n").append("D=M\n").append("A=A-1\n").append("D=M-D\n").append("@LT.true." + n + "\n" ).append("D;JLT\n").
+                                append("@SP\n").append("A=M-1\n").append("M=0\n").append("@LT.after." + n + "\n").append( "0;JMP\n").append( "(LT.true." + n + ")\n").
+                                append("@SP\n").append("A=M-1\n").append("M=-1\n").append("(LT.after." + n + ")\n");
                         break;
                     }
                     case "and": {
@@ -173,8 +187,34 @@ public class Parser {
     }
 
     public static void main(String[] args) throws IOException {
-       new Parser("E:\\nand2tetris\\nand2tetris-master\\nand2tetris-master\\projects\\07\\MemoryAccess\\PointerTest\\backup\\PointerTest.vm").parse();
+        String fileName = args[0];
+        File file = new File(fileName);
+        String property = System.getProperty("user.dir");
+        if (!file.isAbsolute()) {
+            file = new File(property+ "\\" + file.getPath());
+        }
+        if (file.isDirectory()) {
+            parseDirectory(fileName);
 
+        } else {
+            if (file.getName().endsWith(".vm")) {
+                new Parser(file.getPath()).parse();
+            }
+        }
+
+    }
+    static void parseDirectory(String fileName) throws IOException {
+        File directory = new File(fileName);
+        File[] files = directory.listFiles();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                parseDirectory(file.getAbsolutePath());
+            } else {
+                if (file.getName().endsWith(".vm")) {
+                    new Parser(file.getPath()).parse();
+                }
+            }
+        }
     }
 
 

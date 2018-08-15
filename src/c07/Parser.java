@@ -160,7 +160,7 @@ public class Parser {
                         sb.append("@THAT\n").append("D=M\n").append("@" + position + "\n").append("D=D+A\n");
                         break;
                     case "temp":
-                        sb.append("@R5\n").append("D=M\n").append("@" + position + "\n").append("D=D+A\n");
+                        sb.append("@R5\n").append("D=A\n").append("@" + position + "\n").append("D=D+A\n");
                         break;
                     case "pointer":
                         if (position.equals("0"))
@@ -169,7 +169,7 @@ public class Parser {
                             sb.append("@THAT\n").append("D=A\n");
                         break;
                     case "static":
-                        sb.append("@" + currFileName + "." + position + "\n").append("D=M\n");
+                        sb.append("@" + currFileName + "." + position + "\n").append("D=A\n");
                         break;
                     default:
 

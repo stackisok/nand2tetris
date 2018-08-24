@@ -21,8 +21,8 @@ public enum Symbol {
     GREATER(">", "&gt;"),
     EQUAL("=");
 
-    private final String character;
-    private final String xmlExpress;
+    public  String character;
+    public  String xmlExpress;
 
     Symbol(String character) {
         this(character, null);
@@ -31,6 +31,14 @@ public enum Symbol {
     Symbol(String character, String xmlExpress) {
         this.character = character;
         this.xmlExpress = xmlExpress;
+    }
+
+    public static void main(String[] args) {
+
+        for (Symbol e : Symbol.values()) {
+            System.out.println(e.character);
+        }
+
     }
 
 

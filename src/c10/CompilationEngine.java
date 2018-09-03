@@ -3,7 +3,10 @@ package c10;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static c10.Keyword.*;
 import static c10.Symbol.*;
@@ -18,6 +21,9 @@ public class CompilationEngine {
     TokenType token_type;
     TokenType next_token_type;
 
+    private static Set<Keyword> KEYWORD_CONSTANTS = Stream.of(TRUE, FALSE, NULL, THIS).collect(Collectors.toSet());
+    private static Set<Symbol> OPERATORS = Stream.of(PLUS, MINUS, ASTERISK, SLASH, AND, OR, LESS, GREATER, EQUAL).collect(Collectors.toSet());
+    private static Set<Symbol> UNARY_OPERATORS = Stream.of(MINUS, NOT).collect(Collectors.toSet());
     boolean isComment;
     public static final Pattern digital = Pattern.compile("\\d+");
     private static final Pattern LETTER_PATTERN = Pattern.compile("[a-zA-Z]+");
@@ -32,6 +38,7 @@ public class CompilationEngine {
 
     public void parseClass() {
 
+        writeBegXmlElement("class");
         consumeKeyword(CLASS);
         consumeIdentifier(); // className
         consumeSymbol(LEFT_CURLY_BRACKET);
@@ -40,6 +47,8 @@ public class CompilationEngine {
             parseSubroutine();
         }
         consumeSymbol(RIGHT_CURLY_BRACKET);
+        writeEndXmlElement("class");
+
 
 
 //        while (hasMoreTokens()) {}
@@ -47,7 +56,7 @@ public class CompilationEngine {
 
     private boolean isNextTokenTheSymbol(Symbol symbol) {
         String nextToken = getNextToken();
-        return nextToken.equals(symbol.name());
+        return nextToken.equals(symbol.character);
 
     }
 
@@ -271,9 +280,10 @@ public class CompilationEngine {
         }
     }
 
-    private void consumeIdentifier() {
+    private String consumeIdentifier() {
         moveNextToken();
         writeXmlElement("identifier", token);
+        return token;
 
     }
     private void consumeSymbol() {
@@ -281,10 +291,10 @@ public class CompilationEngine {
     }
 
     private void parseClassVarDec() {
-        //todo classVarDec{
 
         String nextToken = getNextToken();
         if (isNextTokenInWords(nextToken, STATIC.toString(), FIELD.toString())) {
+            writeBegXmlElement("classVarDec");
 
 
             consumeKeyword(STATIC, FIELD);
@@ -294,11 +304,14 @@ public class CompilationEngine {
             while (!nextToken.equals(SEMICOLON.character)) {
                 consumeSymbol(COMMA);
                 consumeIdentifier();
+                nextToken = getNextToken();
+
             }
             consumeSymbol(SEMICOLON);
+            writeEndXmlElement("classVarDec");
+
         }
 
-        //todo }
 
     }
 
@@ -326,25 +339,39 @@ public class CompilationEngine {
 //        throw new RuntimeException("the token not in such words");
     }
     private void parseSubroutine() {
-        //todo <>
         String nextToken = getNextToken();
+        if (!isNextTokenInWords(nextToken, CONSTRUCTOR.toString(), FUNCTION.toString(), METHOD.toString())) {
+            return;
+        }
+        writeBegXmlElement("subroutineDec");
+
 
         if (isNextTokenInWords(nextToken, CONSTRUCTOR.toString(), METHOD.toString(), FUNCTION.toString())) {
             consumeKeyword(CONSTRUCTOR, FUNCTION, METHOD);
 
         }
-        if (!nextToken.equals(CONSTRUCTOR.toString()))
+//        if (!nextToken.equals(CONSTRUCTOR.toString())) {
+//
+//
+//        }
+        nextToken = getNextToken();
+        if (nextToken.equals("void"))
+            consumeKeyword(VOID);
+
+        else
             consumeType();
         consumeIdentifier();
         consumeSymbol(LEFT_PARENTHESIS);
         parseParams();
         consumeSymbol(RIGHT_PARENTHESIS);
         parseSubroutineBody();
-        //todo </>
+        writeEndXmlElement("subroutineDec");
 
     }
 
     private void parseSubroutineBody() {
+        writeBegXmlElement("subroutineBody");
+
         consumeSymbol(LEFT_CURLY_BRACKET);
         String nextToken = getNextToken();
 
@@ -355,10 +382,13 @@ public class CompilationEngine {
         }
         parseStatement();
         consumeSymbol(RIGHT_CURLY_BRACKET);
+        writeEndXmlElement("subroutineBody");
 
     }
 
     private void parseVar() {
+        writeBegXmlElement("varDec");
+
         consumeKeyword(VAR);
         consumeType();
         consumeIdentifier();
@@ -367,15 +397,32 @@ public class CompilationEngine {
             consumeIdentifier(); // varName
         }
         consumeSymbol(SEMICOLON);
+        writeEndXmlElement("varDec");
+
 
     }
 
     private void parseParams() {
-
+        writeBegXmlElement("parameterList");
+        String nextToken = getNextToken();
+        if (!isNextTokenInWords(nextToken, INT.toString(), CHAR.toString(), BOOLEAN.toString()) && !isNextTokenOfType(IDENTIFIER)) {
+            writeEndXmlElement("parameterList");
+            return;
+        }
+        consumeType();
+        consumeIdentifier(); // varName
+        while (isNextTokenTheSymbol(COMMA)) {
+            consumeSymbol(COMMA);
+            consumeType();
+            consumeIdentifier(); // varName
+        }
+        writeEndXmlElement("parameterList");
     }
 
     //such like
     public void parseStatement() {
+        writeBegXmlElement("statements");
+
         while (true) {
             String nextToken = getNextToken();
             if (isNextTokenInWords(nextToken, LET.toString())) {
@@ -398,10 +445,14 @@ public class CompilationEngine {
             }
             nextToken = getNextToken();
         }
+        writeEndXmlElement("statements");
+
 
     }
 
     private void parseLet() {
+        writeBegXmlElement("letStatement");
+
         consumeKeyword(LET);
         consumeIdentifier();
         if (isNextTokenTheSymbol(LEFT_SQUARE_BRACKET)) {
@@ -412,55 +463,174 @@ public class CompilationEngine {
         consumeSymbol(EQUAL);
         parseExpression();
         consumeSymbol(SEMICOLON);
+        writeEndXmlElement("letStatement");
+
 
     }
 
     private void parseReturn() {
+        writeBegXmlElement("returnStatement");
+
+        consumeKeyword(RETURN);
+        if (!isNextTokenTheSymbol(SEMICOLON)) {
+            parseExpression();
+        }
+        consumeSymbol(SEMICOLON);
+        writeEndXmlElement("returnStatement");
 
     }
 
     private void parseDo() {
+        writeBegXmlElement("doStatement");
+
         consumeKeyword(DO);
-        consumeIdentifier();
-        consumeSymbol(DOT);
-        consumeIdentifier();
+        parseSubroutineCall("nothing");
         consumeSymbol(SEMICOLON);
+        writeEndXmlElement("doStatement");
+
     }
 
     public void parseWhile() {
+        writeBegXmlElement("whileStatement");
+
         consumeKeyword(WHILE);
         consumeSymbol(LEFT_PARENTHESIS);
         parseExpression();
         consumeSymbol(RIGHT_PARENTHESIS);
-        consumeSymbol(LEFT_CURLY_BRACKET);
-
-        consumeSymbol(RIGHT_CURLY_BRACKET);
-
-
+        consumeStatementBlock();
+        writeEndXmlElement("whileStatement");
 
 
     }
     public void parseIf() {
+        writeBegXmlElement("ifStatement");
+
         consumeKeyword(IF);
         consumeSymbol(LEFT_PARENTHESIS);
         parseExpression();
         consumeSymbol(RIGHT_PARENTHESIS);
 
-//        consumeStatementBlock();
+        consumeStatementBlock();
         String nextToken = getNextToken();
         if (isNextTokenInWords(nextToken,ELSE.toString())) {
             consumeKeyword(ELSE);
-//            consumeStatementBlock();
+            consumeStatementBlock();
+        }
+        writeEndXmlElement("ifStatement");
+
+    }
+
+    private void consumeStatementBlock() {
+        consumeSymbol(LEFT_CURLY_BRACKET);
+        parseStatement();
+        consumeSymbol(RIGHT_CURLY_BRACKET);
+    }
+
+
+    public void parseStatementSequence() {
+
+    }
+    //Expression = tokenizer integer string constant | call | 
+    public void parseExpression() {
+        writeBegXmlElement("expression");
+        compileTerm();
+        while (isNextTokenAnOperator()) {
+            consumeSymbol(Symbol.symbolMap.get(token));
+            compileTerm();
+        }
+        writeEndXmlElement("expression");
+
+    }
+
+    private boolean isNextTokenAnOperator() {
+        String nextToken = getNextToken();
+        return next_token_type == SYMBOL && isNextTokenInWords(nextToken,PLUS.character, PLUS.character, MINUS.character,
+                ASTERISK.character, SLASH.character, AND.character, OR.character, LESS.character, GREATER.character, EQUAL.character);
+    }
+
+    private void compileTerm() {
+        writeBegXmlElement("term");
+
+        String nextToken = getNextToken();
+        if (next_token_type == INT_CONST) {
+            writeXmlElement(INT_CONST.toString(), nextToken);
+            moveNextToken();
+//            tokenConsumed();
+        } else if (next_token_type == STRING_CONST) {
+            writeXmlElement(INT_CONST.toString(), nextToken);
+            moveNextToken();
+//            tokenConsumed();
+        } else if (next_token_type == KEYWORD) {
+            consumeKeyword(KEYWORDS.get(nextToken));
+        } else if (next_token_type == IDENTIFIER) {
+            String identifier = consumeIdentifier(); // varName or subroutineCall's subroutineName|className|varName
+            if (isNextTokenTheSymbol(LEFT_SQUARE_BRACKET)) { // varName[...]
+                consumeSymbol(LEFT_SQUARE_BRACKET);
+                parseExpression();
+                consumeSymbol(RIGHT_SQUARE_BRACKET);
+            }
+            else {
+                if (isNextTokenTheSymbol(LEFT_PARENTHESIS)) { // with subroutineName left of parenthesis
+                    consumeExpressionListWithParenthesis();
+                }
+                else if (isNextTokenTheSymbol(DOT)) { // with className or varName left of dot
+                    consumeSymbol(DOT);
+                    consumeIdentifier(); // subroutineName
+                    consumeExpressionListWithParenthesis();
+                }
+            }
+        } else if (next_token_type == SYMBOL) {
+            if (token == LEFT_PARENTHESIS.character) {
+                consumeSymbol(LEFT_PARENTHESIS);
+                parseExpression();
+                consumeSymbol(RIGHT_PARENTHESIS);
+            }
+            else if (UNARY_OPERATORS.contains(symbolMap.get(nextToken))) {
+                consumeSymbol(symbolMap.get(nextToken));
+                compileTerm();
+            }
+        } else {
+            throw new RuntimeException("unkonw errors.");
+        }
+        writeEndXmlElement("term");
+
+    }
+
+
+    private void parseSubroutineCall(String identifier) {
+        consumeIdentifier();
+        if (isNextTokenTheSymbol(LEFT_PARENTHESIS)) { // with subroutineName left of parenthesis
+            consumeExpressionListWithParenthesis();
+        }
+        else if (isNextTokenTheSymbol(DOT)) { // with className or varName left of dot
+            consumeSymbol(DOT);
+            consumeIdentifier(); // subroutineName
+            consumeExpressionListWithParenthesis();
+        }
+    }
+    private void consumeExpressionListWithParenthesis() {
+        consumeSymbol(LEFT_PARENTHESIS);
+        compileExpressionList();
+        consumeSymbol(RIGHT_PARENTHESIS);
+    }
+
+    private void compileExpressionList() {
+        writeBegXmlElement("expressionList");
+
+
+        if (isNextTokenTheSymbol(RIGHT_PARENTHESIS)) {
+            writeEndXmlElement("expressionList");
+            return;
         }
 
-    }
-        public void parseStatementSequence() {
+        parseExpression();
+        while (isNextTokenTheSymbol(COMMA)) {
+            consumeSymbol(COMMA);
+            parseExpression();
+        }
+        writeEndXmlElement("expressionList");
 
     }
-    public void parseExpression() {
-
-    }
-
 
     void consumeKeyword(Keyword keyword, Keyword... otherwords) {
         moveNextToken();
@@ -482,8 +652,13 @@ public class CompilationEngine {
 
     }
     void writeXmlElement(String label, String content) {
-
-
+        System.out.println("<" + label + "> " + content + " </" + label + ">");
+    }
+    void writeBegXmlElement(String label) {
+        System.out.println("<" + label + ">");
+    }
+    void writeEndXmlElement(String label) {
+        System.out.println("</" + label + ">");
     }
     public static void main(String[] args) throws IOException {
 //        Pattern compile = Pattern.compile("\\d+");
@@ -494,7 +669,8 @@ public class CompilationEngine {
 //        String s1 = s.replaceAll("/\\*\\w*\\*/", "");
 //        System.out.println(s1);
 
-        CompilationEngine compilationEngine = new CompilationEngine("E:\\nand2tetris\\nand2tetris-master\\nand2tetris-master\\projects\\10\\Square\\1\\Main.jack");
+        System.out.println();
+        CompilationEngine compilationEngine = new CompilationEngine("E:\\nand2tetris\\nand2tetris-master\\nand2tetris-master\\projects\\10\\ExpressionlessSquare\\Square.jack");
         compilationEngine.parseClass();
     }
 

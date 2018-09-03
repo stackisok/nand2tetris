@@ -1,6 +1,16 @@
 package c10;
 
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.IntConsumer;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toMap;
+
 public enum Symbol {
+
     LEFT_CURLY_BRACKET("{"),
     RIGHT_CURLY_BRACKET("}"),
     LEFT_PARENTHESIS("("),
@@ -21,6 +31,8 @@ public enum Symbol {
     GREATER(">", "&gt;"),
     EQUAL("=");
 
+
+    public static Map<String, Symbol> symbolMap = Stream.of(values()).collect(toMap(Symbol::toString, Function.identity()));
     public  String character;
     public  String xmlExpress;
 
@@ -34,12 +46,12 @@ public enum Symbol {
     }
 
     public static void main(String[] args) {
-
-        for (Symbol e : Symbol.values()) {
-            System.out.println(e.character);
-        }
-
+        System.out.println(1);
     }
 
+    @Override
+    public String toString() {
+        return name().toLowerCase();
+    }
 
 }

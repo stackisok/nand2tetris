@@ -21,13 +21,11 @@ public class CompilationEngine {
     TokenType token_type;
     TokenType next_token_type;
 
-    private static Set<Keyword> KEYWORD_CONSTANTS = Stream.of(TRUE, FALSE, NULL, THIS).collect(Collectors.toSet());
-    private static Set<Symbol> OPERATORS = Stream.of(PLUS, MINUS, ASTERISK, SLASH, AND, OR, LESS, GREATER, EQUAL).collect(Collectors.toSet());
+
     private static Set<Symbol> UNARY_OPERATORS = Stream.of(MINUS, NOT).collect(Collectors.toSet());
     boolean isComment;
-    public static final Pattern digital = Pattern.compile("\\d+");
+    public static final Pattern DIGITAL = Pattern.compile("\\d+");
     private static final Pattern LETTER_PATTERN = Pattern.compile("[a-zA-Z]+");
-    private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("\\w+");
 
     CompilationEngine(String fileName) throws IOException {
 
@@ -88,8 +86,14 @@ public class CompilationEngine {
             String nextTokenChar = String.valueOf(currentLine.charAt(end));
 
             //token_sub is identifier
-            if (token_sub.matches(LETTER_PATTERN.pattern()) && !firstTokenChar.matches(digital.pattern())) {
+            if (token_sub.matches(LETTER_PATTERN.pattern()) && !firstTokenChar.matches(DIGITAL.pattern())) {
                 if (isSymbolOrSpace(nextTokenChar)) {
+                    if (KEYWORDS.get(token_sub) != null) {
+                        token_type = KEYWORD;
+                        token = token_sub;
+                        position = end;
+                        return ;
+                    }
                     token_type = IDENTIFIER;
                     token = token_sub;
                     position = end;
@@ -98,8 +102,8 @@ public class CompilationEngine {
                 continue;
 
             }
-            //token_sub is digital
-            if (token_sub.matches(digital.pattern())) {
+            //token_sub is DIGITAL
+            if (token_sub.matches(DIGITAL.pattern())) {
                 if (isSymbolOrSpace(nextTokenChar)) {
                     token = token_sub;
                     position = end;
@@ -109,8 +113,8 @@ public class CompilationEngine {
                 continue;
             }
 
-            //token_sub is digital
-            if (token_sub.matches(digital.pattern())) {
+            //token_sub is DIGITAL
+            if (token_sub.matches(DIGITAL.pattern())) {
                 if (isSymbolOrSpace(nextTokenChar)) {
                     token = token_sub;
                     position = end;
@@ -209,17 +213,22 @@ public class CompilationEngine {
             String nextTokenChar = String.valueOf(currentLine.charAt(end));
 
             //token_sub is identifier
-            if (token_sub.matches(LETTER_PATTERN.pattern()) && !firstTokenChar.matches(digital.pattern())) {
+            if (token_sub.matches(LETTER_PATTERN.pattern()) && !firstTokenChar.matches(DIGITAL.pattern())) {
                 if (isSymbolOrSpace(nextTokenChar)) {
-                    next_token_type = IDENTIFIER;;
+                    if (KEYWORDS.get(token_sub) != null) {
+                        next_token_type = KEYWORD;
+
+                        return token_sub;
+                    }
+                    next_token_type = IDENTIFIER;
 
                     return token_sub;
                 }
                 continue;
 
             }
-            //token_sub is digital
-            if (token_sub.matches(digital.pattern())) {
+            //token_sub is DIGITAL
+            if (token_sub.matches(DIGITAL.pattern())) {
                 if (isSymbolOrSpace(nextTokenChar)) {
                     next_token_type = INT_CONST;
                     return token_sub;
@@ -227,8 +236,8 @@ public class CompilationEngine {
                 continue;
             }
 
-            //token_sub is digital
-            if (token_sub.matches(digital.pattern())) {
+            //token_sub is DIGITAL
+            if (token_sub.matches(DIGITAL.pattern())) {
                 if (isSymbolOrSpace(nextTokenChar)) {
                     next_token_type = INT_CONST;
                     return token_sub;
@@ -527,9 +536,6 @@ public class CompilationEngine {
     }
 
 
-    public void parseStatementSequence() {
-
-    }
     //Expression = tokenizer integer string constant | call | 
     public void parseExpression() {
         writeBegXmlElement("expression");

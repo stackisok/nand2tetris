@@ -1,8 +1,6 @@
 package c10;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -15,6 +13,7 @@ import static c10.TokenType.*;
 
 public class CompilationEngine {
     BufferedReader fileReader;
+    BufferedWriter fileWrite;
     String currentLine;
     int position;
     String token;
@@ -31,6 +30,9 @@ public class CompilationEngine {
 
         fileReader = new BufferedReader(new FileReader(fileName));
         readNextLine();
+        int i = fileName.lastIndexOf(".jack");
+        String substring = fileName.substring(0, i) + ".xml";
+        fileWrite = new BufferedWriter(new FileWriter(substring));
 
     }
 
@@ -659,12 +661,27 @@ public class CompilationEngine {
     }
     void writeXmlElement(String label, String content) {
         System.out.println("<" + label + "> " + content + " </" + label + ">");
+        try {
+            fileWrite.write("<" + label + "> " + content + " </" + label + ">\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     void writeBegXmlElement(String label) {
         System.out.println("<" + label + ">");
+        try {
+            fileWrite.write("<" + label + ">\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     void writeEndXmlElement(String label) {
         System.out.println("</" + label + ">");
+        try {
+            fileWrite.write("</" + label + ">\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     public static void main(String[] args) throws IOException {
 //        Pattern compile = Pattern.compile("\\d+");
@@ -676,8 +693,10 @@ public class CompilationEngine {
 //        System.out.println(s1);
 
         System.out.println();
-        CompilationEngine compilationEngine = new CompilationEngine("E:\\nand2tetris\\nand2tetris-master\\nand2tetris-master\\projects\\10\\ExpressionlessSquare\\Square.jack");
+        CompilationEngine compilationEngine = new CompilationEngine("E:\\nand2tetris\\nand2tetris-master\\nand2tetris-master\\projects\\10\\Square\\1\\Main.jack");
         compilationEngine.parseClass();
+        compilationEngine.fileWrite.flush();
+        compilationEngine.fileWrite.close();
     }
 
 }
